@@ -18,7 +18,7 @@ services:
     networks:
     - testing_net
     volumes:
-    - myconfig:/build/config.yaml
+    - ./client/config.yaml:/config.yaml
   server:
     container_name: server
     entrypoint: python3 /main.py
@@ -29,6 +29,4 @@ services:
     networks:
     - testing_net
     volumes:
-    - myconfig:/server/config.ini
-volumes:
-  myconfig:
+    - ./server/config.ini:/config.ini

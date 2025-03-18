@@ -13,7 +13,7 @@ data = dict(
 			entrypoint = 'python3 /main.py',
 			environment = ['PYTHONUNBUFFERED=1', 'LOGGING_LEVEL=DEBUG'],
 			networks = ['testing_net'],
-			volumes = ['myconfig:/server/config.ini']
+			volumes = ['./server/config.ini:/config.ini']
 		)
 	),
 	networks = dict(
@@ -34,7 +34,7 @@ for i in range(1, num_clients + 1):
         environment = [f'CLI_ID={i}', 'CLI_LOG_LEVEL=DEBUG'],
         networks = ['testing_net'],
         depends_on = ['server'],
-		volumes = ['myconfig:/build/config.yaml']
+		volumes = ['./client/config.yaml:/config.yaml']
     )
 
 with open(output_file, 'w') as file:
