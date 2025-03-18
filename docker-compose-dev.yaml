@@ -17,39 +17,8 @@ services:
     image: client:latest
     networks:
     - testing_net
-  client2:
-    container_name: client2
-    depends_on:
-    - server
-    entrypoint: /client
-    environment:
-    - CLI_ID=2
-    - CLI_LOG_LEVEL=DEBUG
-    image: client:latest
-    networks:
-    - testing_net
-  client3:
-    container_name: client3
-    depends_on:
-    - server
-    entrypoint: /client
-    environment:
-    - CLI_ID=3
-    - CLI_LOG_LEVEL=DEBUG
-    image: client:latest
-    networks:
-    - testing_net
-  client4:
-    container_name: client4
-    depends_on:
-    - server
-    entrypoint: /client
-    environment:
-    - CLI_ID=4
-    - CLI_LOG_LEVEL=DEBUG
-    image: client:latest
-    networks:
-    - testing_net
+    volumes:
+    - myconfig:/build/config.yaml
   server:
     container_name: server
     entrypoint: python3 /main.py
@@ -59,3 +28,7 @@ services:
     image: server:latest
     networks:
     - testing_net
+    volumes:
+    - myconfig:/server/config.ini
+volumes:
+  myconfig:

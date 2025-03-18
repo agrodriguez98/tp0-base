@@ -2,7 +2,7 @@ import sys
 import yaml
 
 output_file = sys.argv[1]
-num_clients = sys.argv[2]
+num_clients = int(sys.argv[2])
 
 data = dict(
 	name = 'tp0',
@@ -12,7 +12,8 @@ data = dict(
 			image = 'server:latest',
 			entrypoint = 'python3 /main.py',
 			environment = ['PYTHONUNBUFFERED=1', 'LOGGING_LEVEL=DEBUG'],
-			networks = ['testing_net']
+			networks = ['testing_net'],
+			volumes = ['myconfig:/server/config.ini']
 		)
 	),
 	networks = dict(
@@ -25,14 +26,15 @@ data = dict(
 	)
 )
 
-for i in range(1, int(num_clients) + 1):
+for i in range(1, num_clients + 1):
     data['services'][f'client{i}'] = dict(
         container_name = f'client{i}',
         image = 'client:latest',
         entrypoint = '/client',
         environment = [f'CLI_ID={i}', 'CLI_LOG_LEVEL=DEBUG'],
         networks = ['testing_net'],
-        depends_on = ['server']
+        depends_on = ['server'],
+		volumes = ['myconfig:/build/config.yaml']
     )
 
 with open(output_file, 'w') as file:
