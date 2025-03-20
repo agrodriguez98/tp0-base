@@ -26,8 +26,6 @@ services:
     image: ubuntu:latest
     networks:
     - testing_net
-    volumes:
-    - ./server/config.ini:/config.ini
   server:
     container_name: server
     entrypoint: python3 /main.py

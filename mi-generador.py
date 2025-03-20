@@ -20,8 +20,7 @@ data = dict(
 			depends_on = ['server'],
 			entrypoint = './validar-echo-server.sh',
 			image = 'ubuntu:latest',
-			networks = ['testing_net'],
-			volumes = ['./server/config.ini:/config.ini']
+			networks = ['testing_net']
 		)
 	),
 	networks = dict(
