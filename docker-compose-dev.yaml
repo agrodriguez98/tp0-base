@@ -28,3 +28,11 @@ services:
     - testing_net
     volumes:
     - ./server/config.ini:/config.ini
+  echo_tester:
+    container_name: echo_tester
+    depends_on:
+    - server
+    entrypoint: ./validar-echo-server.sh server 12345
+    image: ubuntu:latest
+    networks:
+    - testing_net
