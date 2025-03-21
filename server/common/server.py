@@ -37,7 +37,7 @@ class Server:
     def shutdown(self):
         fd = self._server_socket.fileno()
         self._server_socket.close()
-        logging.info(f'action: shutdown | result: succes | socket fd: {fd}')
+        logging.info(f'action: shutdown | result: success | socket fd: {fd}')
         sys.exit(0)
 
     def __handle_client_connection(self, client_sock):
