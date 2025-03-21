@@ -1,6 +1,15 @@
 import socket
 import logging
+import signal
+import sys
 
+class SignalHandler:
+    def __init__(self, server):
+        self.server = server
+        signal.signal(signal.SIGTERM, self.sigterm_handler)
+
+    def sigterm_handler(self, signal, frame):
+        self.server.shutdown()
 
 class Server:
     def __init__(self, port, listen_backlog):
@@ -8,6 +17,7 @@ class Server:
         self._server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self._server_socket.bind(('', port))
         self._server_socket.listen(listen_backlog)
+        self.signal_handler = SignalHandler(self)
 
     def run(self):
         """
@@ -23,6 +33,12 @@ class Server:
         while True:
             client_sock = self.__accept_new_connection()
             self.__handle_client_connection(client_sock)
+
+    def shutdown(self):
+        fd = self._server_socket.fileno()
+        self._server_socket.close()
+        logging.info(f'action: shutdown | result: succes | socket fd: {fd}')
+        sys.exit(0)
 
     def __handle_client_connection(self, client_sock):
         """
