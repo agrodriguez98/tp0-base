@@ -51,7 +51,6 @@ class Server:
             # TODO: Modify the receive to avoid short-reads
             msg = client_sock.recv(1024).rstrip().decode('utf-8')
             addr = client_sock.getpeername()
-            logging.info(f'action: receive_message | result: success | ip: {addr[0]} | msg: {msg}')
 
             data = msg.split('|')
             bet = Bet(data[0], data[1], data[2], data[3], data[4], data[5])
