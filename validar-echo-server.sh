@@ -1,7 +1,6 @@
 #!/bin/bash
-python3 validar-echo-server.py
-ip=$(cat ip_file)
-port=$(cat port_file)
+ip="server"
+port="12345"
 sent="hola"
 received=$(echo $sent | nc $ip $port -w 3)
 if [[ $received == $sent ]]; then
