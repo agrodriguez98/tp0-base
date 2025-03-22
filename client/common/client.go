@@ -28,6 +28,14 @@ type Client struct {
 	conn   net.Conn
 }
 
+type Bet struct {
+	Name					string
+	LastName			string
+	Document			int
+	Birthdate			string
+	Number				int
+}
+
 // NewClient Initializes a new client receiving the configuration
 // as a parameter
 func NewClient(config ClientConfig) *Client {
@@ -96,6 +104,45 @@ func (c *Client) StartClientLoop() {
 
 	}
 	log.Infof("action: loop_finished | result: success | client_id: %v", c.config.ID)
+}
+
+func (c *Client) SendBet(b Bet) {
+	gracefulShutdown := make(chan os.Signal, 1)
+	signal.Notify(gracefulShutdown, syscall.SIGTERM)
+	for i := 0; i < 1; i++ {
+		select {
+		case <-gracefulShutdown:
+			c.Shutdown()
+		default:
+			c.createClientSocket()
+
+			fmt.Fprintf(
+				c.conn,
+				"%v|%s|%s|%d|%s|%d\n",
+				c.config.ID,
+				b.Name,
+				b.LastName,
+				b.Document,
+				b.Birthdate,
+				b.Number,
+			)
+			_, err := bufio.NewReader(c.conn).ReadString('\n')
+			c.conn.Close()
+
+			if err != nil {
+				log.Errorf("action: receive_message | result: fail | client_id: %v | error: %v",
+					c.config.ID,
+					err,
+				)
+				return
+			}
+
+			log.Infof("action: apuesta_enviada | result: success | dni: %d | numero: %d",
+				b.Document,
+				b.Number,
+			)
+		}
+	}
 }
 
 func (c* Client) Shutdown() {

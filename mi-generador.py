@@ -14,13 +14,6 @@ data = dict(
 			environment = ['PYTHONUNBUFFERED=1'],
 			networks = ['testing_net'],
 			volumes = ['./server/config.ini:/config.ini']
-		),
-		echo_tester = dict(
-			container_name = 'echo_tester',
-			depends_on = ['server'],
-			entrypoint = './validar-echo-server.sh',
-			image = 'ubuntu:latest',
-			networks = ['testing_net']
 		)
 	),
 	networks = dict(
@@ -38,7 +31,14 @@ for i in range(1, num_clients + 1):
         container_name = f'client{i}',
         image = 'client:latest',
         entrypoint = '/client',
-        environment = [f'CLI_ID={i}'],
+        environment = [
+			f'CLI_ID={i}',
+			'CLI_NOMBRE=Santiago Lionel',
+			'CLI_APELLIDO=Lorca',
+	    	'CLI_DOCUMENTO=30904465',
+	    	'CLI_NACIMIENTO=1999-03-17',
+	    	'CLI_NUMERO=7574',
+		],
         networks = ['testing_net'],
         depends_on = ['server'],
 		volumes = ['./client/config.yaml:/config.yaml']
