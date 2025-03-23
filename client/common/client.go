@@ -8,6 +8,8 @@ import (
 	"os"
 	"os/signal"
   "syscall"
+	"encoding/binary"
+	"io"
 
 	"github.com/op/go-logging"
 )
@@ -116,9 +118,8 @@ func (c *Client) SendBet(b Bet) {
 		default:
 			c.createClientSocket()
 
-			fmt.Fprintf(
-				c.conn,
-				"%v|%s|%s|%d|%s|%d\n",
+			data := fmt.Sprintf(
+				"%v|%s|%s|%d|%s|%d",
 				c.config.ID,
 				b.Name,
 				b.LastName,
@@ -126,13 +127,28 @@ func (c *Client) SendBet(b Bet) {
 				b.Birthdate,
 				b.Number,
 			)
-			_, err := bufio.NewReader(c.conn).ReadString('\n')
+			size := int32(len(data))
+
+			err1 := binary.Write(c.conn, binary.BigEndian, size)
+			if err1 != nil {
+				log.Errorf("action: send_size | result: fail | client_id: %v | error: %v",
+					c.config.ID,
+					err1,
+				)
+				return
+			}
+
+			for c.send(data) < size {
+				c.send(data)
+			}
+
+			_, err2 := bufio.NewReader(c.conn).ReadString('\n')
 			c.conn.Close()
 
-			if err != nil {
+			if err2 != nil {
 				log.Errorf("action: receive_message | result: fail | client_id: %v | error: %v",
 					c.config.ID,
-					err,
+					err2,
 				)
 				return
 			}
@@ -143,6 +159,17 @@ func (c *Client) SendBet(b Bet) {
 			)
 		}
 	}
+}
+
+func (c* Client) send(data string) int32 {
+	n, err := io.WriteString(c.conn, data)
+	if err != nil {
+		log.Errorf("action: send_data | result: fail | client_id: %v | error: %v",
+			c.config.ID,
+			err,
+		)
+	}
+	return int32(n)
 }
 
 func (c* Client) Shutdown() {

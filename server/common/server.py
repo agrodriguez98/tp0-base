@@ -40,6 +40,12 @@ class Server:
         logging.info(f'action: shutdown | result: success | socket fd: {fd}')
         sys.exit(0)
 
+    def recv(self, client_sock, size):
+        data = client_sock.recv(size)
+        while (len(data) < size):
+            data = client_sock.recv(size)
+        return data
+
     def __handle_client_connection(self, client_sock):
         """
         Read message from a specific client socket and closes the socket
@@ -49,9 +55,11 @@ class Server:
         """
         try:
             # TODO: Modify the receive to avoid short-reads
-            msg = client_sock.recv(1024).rstrip().decode('utf-8')
+            n = client_sock.recv(4)
             addr = client_sock.getpeername()
-
+            size = int.from_bytes(n, "big")
+            data = self.recv(client_sock, size)
+            msg = data.decode('utf-8')
             data = msg.split('|')
             bet = Bet(data[0], data[1], data[2], data[3], data[4], data[5])
             store_bets([bet])
