@@ -19,7 +19,7 @@ Los targets disponibles son:
 
 ### Servidor
 
-Se trata de un "echo server", en donde los mensajes recibidos por el cliente se responden inmediatamente y sin alterar. 
+Se trata de un "echo server", en donde los mensajes recibidos por el cliente se responden inmediatamente y sin alterar.
 
 Se ejecutan en bucle las siguientes etapas:
 
@@ -31,7 +31,7 @@ Se ejecutan en bucle las siguientes etapas:
 
 ### Cliente
  se conecta reiteradas veces al servidor y envía mensajes de la siguiente forma:
- 
+
 1. Cliente se conecta al servidor.
 2. Cliente genera mensaje incremental.
 3. Cliente envía mensaje al servidor y espera mensaje de respuesta.
@@ -76,7 +76,7 @@ client1 exited with code 0
 En esta primera parte del trabajo práctico se plantean una serie de ejercicios que sirven para introducir las herramientas básicas de Docker que se utilizarán a lo largo de la materia. El entendimiento de las mismas será crucial para el desarrollo de los próximos TPs.
 
 ### Ejercicio N°1:
-Definir un script de bash `generar-compose.sh` que permita crear una definición de Docker Compose con una cantidad configurable de clientes.  El nombre de los containers deberá seguir el formato propuesto: client1, client2, client3, etc. 
+Definir un script de bash `generar-compose.sh` que permita crear una definición de Docker Compose con una cantidad configurable de clientes.  El nombre de los containers deberá seguir el formato propuesto: client1, client2, client3, etc.
 
 El script deberá ubicarse en la raíz del proyecto y recibirá por parámetro el nombre del archivo de salida y la cantidad de clientes esperados:
 
@@ -134,8 +134,21 @@ Se deberá implementar un módulo de comunicación entre el cliente y el servido
 * Correcto empleo de sockets, incluyendo manejo de errores y evitando los fenómenos conocidos como [_short read y short write_](https://cs61.seas.harvard.edu/site/2018/FileDescriptors/).
 
 
+#### Protocolo
+El cliente primero envía un entero de 32 bits que indica la cantidad de bytes que enviará a continuación. Luego envía los datos de la apuesta. Cuando el servidor recibe toda la información envía un ACK para confirmar la recepción de los datos.
+
+![Protocol](/protocol.png)
+
+Los datos enviados poseen la siguiente estructura:
+
+``
+agency|firstName|lastName|document|birthdate|number
+``
+
+El número de agencia, el documento y el número de apuesta son enteros de 32 bits. La fecha de nacimiento es un string de 10 bytes con formato yyyy-mm-dd. El nombre y apellido son strings de longitud variable con un máximo de 20 bytes. Todos los datos están separados por un delimitador.
+
 ### Ejercicio N°6:
-Modificar los clientes para que envíen varias apuestas a la vez (modalidad conocida como procesamiento por _chunks_ o _batchs_). 
+Modificar los clientes para que envíen varias apuestas a la vez (modalidad conocida como procesamiento por _chunks_ o _batchs_).
 Los _batchs_ permiten que el cliente registre varias apuestas en una misma consulta, acortando tiempos de transmisión y procesamiento.
 
 La información de cada agencia será simulada por la ingesta de su archivo numerado correspondiente, provisto por la cátedra dentro de `.data/datasets.zip`.
@@ -143,7 +156,7 @@ Los archivos deberán ser inyectados en los containers correspondientes y persis
 
 En el servidor, si todas las apuestas del *batch* fueron procesadas correctamente, imprimir por log: `action: apuesta_recibida | result: success | cantidad: ${CANTIDAD_DE_APUESTAS}`. En caso de detectar un error con alguna de las apuestas, debe responder con un código de error a elección e imprimir: `action: apuesta_recibida | result: fail | cantidad: ${CANTIDAD_DE_APUESTAS}`.
 
-La cantidad máxima de apuestas dentro de cada _batch_ debe ser configurable desde config.yaml. Respetar la clave `batch: maxAmount`, pero modificar el valor por defecto de modo tal que los paquetes no excedan los 8kB. 
+La cantidad máxima de apuestas dentro de cada _batch_ debe ser configurable desde config.yaml. Respetar la clave `batch: maxAmount`, pero modificar el valor por defecto de modo tal que los paquetes no excedan los 8kB.
 
 Por su parte, el servidor deberá responder con éxito solamente si todas las apuestas del _batch_ fueron procesadas correctamente.
 
