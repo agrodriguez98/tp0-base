@@ -30,8 +30,7 @@ func (parser *DataParser) ParseData(c *Client) {
     if err == io.EOF {
       if len(records) > 0 {
         data := parser.formatData(c, records)
-        // send data
-        log.Infof(data)
+        c.SendBets(data, len(records))
       }
       break
 		}
@@ -45,8 +44,7 @@ func (parser *DataParser) ParseData(c *Client) {
 		records = append(records, record)
     if len(records) == parser.ChunkSize {
       data := parser.formatData(c, records)
-      // send data
-      log.Infof(data)
+      c.SendBets(data, len(records))
       records = nil
     }
 	}

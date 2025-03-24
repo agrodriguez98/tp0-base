@@ -116,5 +116,5 @@ func main() {
 	}
 
 	client := common.NewClient(clientConfig)
-	client.SendBets(dataParser)
+	client.Bets(dataParser)
 }

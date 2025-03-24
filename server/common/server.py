@@ -54,19 +54,29 @@ class Server:
         client socket will also be closed
         """
         try:
-            # TODO: Modify the receive to avoid short-reads
-            n = client_sock.recv(4)
-            addr = client_sock.getpeername()
-            size = int.from_bytes(n, "big")
-            data = self.recv(client_sock, size)
-            msg = data.decode('utf-8')
-            data = msg.split('|')
+            while True:
+                packet = client_sock.recv(1024).decode('utf-8')
+                msg = packet.split('|')
+                header = msg[0]
+                if header == 's':
+                    client_sock.send("ACK\n".encode('utf-8'))
+                    size = int(msg[1])
+                    batch = client_sock.recv(size).decode('utf-8')
+                    logging.info(batch)
+                    client_sock.send("ACK\n".encode('utf-8'))
+                    # process batch
+                elif header == 'd':
+                    client_sock.send("ACK\n".encode('utf-8'))
+                    logging.info('client done')
+                    break
+                else:
+                    logging.info('received unknown header')
+            '''data = msg.split('|')
             bet = Bet(data[0], data[1], data[2], data[3], data[4], data[5])
             store_bets([bet])
             logging.info(f'action: apuesta_almacenada | result: success | dni: {bet.document} | numero: {bet.number}')
 
-            # TODO: Modify the send to avoid short-writes
-            client_sock.send("ACK\n".encode('utf-8'))
+            client_sock.send("ACK\n".encode('utf-8'))'''
         except OSError as e:
             logging.error("action: receive_message | result: fail | error: {e}")
         finally:

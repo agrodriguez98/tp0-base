@@ -1,14 +1,13 @@
 package common
 
 import (
-	"bufio"
 	"fmt"
+	"bufio"
 	"net"
 	"time"
 	"os"
 	"os/signal"
   "syscall"
-	"encoding/binary"
 	"io"
 
 	"github.com/op/go-logging"
@@ -63,11 +62,15 @@ func (c *Client) createClientSocket() error {
 	return nil
 }
 
-func (c *Client) SendBets(parser DataParser) {
+func (c *Client) Bets(parser DataParser) {
+	c.createClientSocket()
 	parser.ParseData(c)
+	c.send_done()
+	c.recv_ack()
+	c.conn.Close()
 }
 
-func (c *Client) SendBet(b Bet) {
+func (c *Client) SendBets(data string, num_bets int) {
 	gracefulShutdown := make(chan os.Signal, 1)
 	signal.Notify(gracefulShutdown, syscall.SIGTERM)
 	for i := 0; i < 1; i++ {
@@ -75,47 +78,15 @@ func (c *Client) SendBet(b Bet) {
 		case <-gracefulShutdown:
 			c.Shutdown()
 		default:
-			c.createClientSocket()
-
-			data := fmt.Sprintf(
-				"%v|%s|%s|%d|%s|%d",
-				c.config.ID,
-				b.Name,
-				b.LastName,
-				b.Document,
-				b.Birthdate,
-				b.Number,
-			)
 			size := int32(len(data))
-
-			err1 := binary.Write(c.conn, binary.BigEndian, size)
-			if err1 != nil {
-				log.Errorf("action: send_size | result: fail | client_id: %v | error: %v",
-					c.config.ID,
-					err1,
-				)
-				return
-			}
-
-			for c.send(data) < size {
-				c.send(data)
-			}
-
-			_, err2 := bufio.NewReader(c.conn).ReadString('\n')
-			c.conn.Close()
-
-			if err2 != nil {
-				log.Errorf("action: receive_message | result: fail | client_id: %v | error: %v",
-					c.config.ID,
-					err2,
-				)
-				return
-			}
-
-			log.Infof("action: apuesta_enviada | result: success | dni: %d | numero: %d",
-				b.Document,
-				b.Number,
-			)
+			size_packet := fmt.Sprintf("s|%d", size)
+			c.send(size_packet)
+			c.recv_ack()
+			c.send(data)
+			c.recv_ack()
+			/*log.Infof("action: apuesta_enviada | result: success | cantidad: %d",
+				num_bets,
+			)*/
 		}
 	}
 }
@@ -129,6 +100,22 @@ func (c* Client) send(data string) int32 {
 		)
 	}
 	return int32(n)
+}
+
+func (c* Client) send_done() {
+	done_packet := "d|"
+	c.send(done_packet)
+}
+
+func (c* Client) recv_ack() {
+	_, err := bufio.NewReader(c.conn).ReadString('\n')
+
+	if err != nil {
+		log.Errorf("action: receive_message | result: fail | client_id: %v | error: %v",
+			c.config.ID,
+			err,
+		)
+	}
 }
 
 func (c* Client) Shutdown() {
