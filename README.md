@@ -160,6 +160,23 @@ La cantidad máxima de apuestas dentro de cada _batch_ debe ser configurable des
 
 Por su parte, el servidor deberá responder con éxito solamente si todas las apuestas del _batch_ fueron procesadas correctamente.
 
+#### Protocolo
+Luego de establecer la conexión, el cliente envía un número entero que indica la cantidad de bytes que enviará a continuación. Al recibir este número el servidor responde con un mensaje confirmando la recepción del primero. Ahora el cliente envía un batch de apuestas cuyo tamaño en bytes fue informado previamente. Al recibirlo, el servidor nuevamente responde con un ACK. El proceso se repite hasta que el cliente haya enviado todos los batchs. En ese momento el cliente envía un mensaje informando que terminó de enviar todas las apuestas. El servidor responde con un ACK y ambos lados cierran la conexión.
+
+![Protocol6](/protocol6.png)
+
+Los datos enviados poseen la siguiente estructura:
+
+``
+bet1||bet2||bet3||...||betn
+``
+
+Donde cada bet tiene la siguiente forma:
+
+``
+agency|firstName|lastName|document|birthdate|number
+``
+
 ### Ejercicio N°7:
 
 Modificar los clientes para que notifiquen al servidor al finalizar con el envío de todas las apuestas y así proceder con el sorteo.
