@@ -46,6 +46,12 @@ class Server:
             data = client_sock.recv(size)
         return data
 
+    def process_batch(self, batch):
+        data = list(map(lambda x: x.split('|'), batch.split('||')))
+        bets = list(map(lambda x: Bet(x[0], x[1], x[2], x[3], x[4], x[5]), data))
+        store_bets(bets)
+        logging.info(f'action: apuesta_recibida | result: success | cantidad: {len(bets)}')
+
     def __handle_client_connection(self, client_sock):
         """
         Read message from a specific client socket and closes the socket
@@ -62,21 +68,13 @@ class Server:
                     client_sock.send("ACK\n".encode('utf-8'))
                     size = int(msg[1])
                     batch = client_sock.recv(size).decode('utf-8')
-                    logging.info(batch)
+                    self.process_batch(batch)
                     client_sock.send("ACK\n".encode('utf-8'))
-                    # process batch
                 elif header == 'd':
                     client_sock.send("ACK\n".encode('utf-8'))
-                    logging.info('client done')
                     break
                 else:
                     logging.info('received unknown header')
-            '''data = msg.split('|')
-            bet = Bet(data[0], data[1], data[2], data[3], data[4], data[5])
-            store_bets([bet])
-            logging.info(f'action: apuesta_almacenada | result: success | dni: {bet.document} | numero: {bet.number}')
-
-            client_sock.send("ACK\n".encode('utf-8'))'''
         except OSError as e:
             logging.error("action: receive_message | result: fail | error: {e}")
         finally:
