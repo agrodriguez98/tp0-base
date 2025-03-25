@@ -14,12 +14,13 @@ class SignalHandler:
         self.server.shutdown()
 
 class Server:
-    def __init__(self, port, listen_backlog):
+    def __init__(self, port, listen_backlog, number_clients):
         # Initialize server socket
         self._server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self._server_socket.bind(('', port))
         self._server_socket.listen(listen_backlog)
         self.signal_handler = SignalHandler(self)
+        self.number_clients = number_clients
         self.pending_connections = []
 
     def run(self):
@@ -35,7 +36,7 @@ class Server:
             client_sock = self.__accept_new_connection()
             self.__handle_client_connection(client_sock)
             # verify all clients sent data
-            if len(self.pending_connections) == 5:
+            if len(self.pending_connections) == self.number_clients:
                 logging.info(f'action: sorteo | result: success')
                 self.send_results()
                 self.pending_connections.clear()

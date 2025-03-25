@@ -11,7 +11,7 @@ data = dict(
 			container_name = 'server',
 			image = 'server:latest',
 			entrypoint = 'python3 /main.py',
-			environment = ['PYTHONUNBUFFERED=1'],
+			environment = ['PYTHONUNBUFFERED=1', f'NUM_CLIENTS={num_clients}'],
 			networks = ['testing_net'],
 			volumes = ['./server/config.ini:/config.ini']
 		)

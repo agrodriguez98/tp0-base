@@ -76,6 +76,7 @@ services:
     entrypoint: python3 /main.py
     environment:
     - PYTHONUNBUFFERED=1
+    - NUM_CLIENTS=5
     image: server:latest
     networks:
     - testing_net
