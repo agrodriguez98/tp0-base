@@ -65,7 +65,7 @@ class Server:
         return '|'.join(winners) + '\n'
 
     def send_results(self):
-        bets = load_bets()
+        bets = list(load_bets())
         for client_sock in self.pending_connections:
             client_sock.send("ID\n".encode('utf-8'))
             id_data = client_sock.recv(1024).decode('utf-8')
