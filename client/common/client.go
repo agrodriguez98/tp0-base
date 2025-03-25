@@ -2,6 +2,7 @@ package common
 
 import (
 	"fmt"
+	"strings"
 	"bufio"
 	"net"
 	"time"
@@ -66,8 +67,22 @@ func (c *Client) Bets(parser DataParser) {
 	c.createClientSocket()
 	parser.ParseData(c)
 	c.send_done()
-	c.recv_ack()
+	c.recv_send_id()
+	c.recv_results()
 	c.conn.Close()
+}
+
+func (c* Client) recv_results() {
+	data, err := bufio.NewReader(c.conn).ReadString('\n')
+
+	if err != nil {
+		log.Errorf("action: receive_results | result: fail | client_id: %v | error: %v",
+			c.config.ID,
+			err,
+		)
+	}
+	winners := []string{strings.TrimRight(data, "\n")}
+	log.Infof("action: consulta_ganadores | result: success | cant_ganadores: %v", len(winners))
 }
 
 func (c *Client) SendBets(data string, num_bets int) {
@@ -111,10 +126,24 @@ func (c* Client) recv_ack() {
 	_, err := bufio.NewReader(c.conn).ReadString('\n')
 
 	if err != nil {
-		log.Errorf("action: receive_message | result: fail | client_id: %v | error: %v",
+		log.Errorf("action: receive_ack | result: fail | client_id: %v | error: %v",
 			c.config.ID,
 			err,
 		)
+	}
+}
+
+func (c* Client) recv_send_id() {
+	data, err := bufio.NewReader(c.conn).ReadString('\n')
+
+	if err != nil {
+		log.Errorf("action: receive_id | result: fail | client_id: %v | error: %v",
+			c.config.ID,
+			err,
+		)
+	}
+	if data == "ID\n" {
+		c.send(c.config.ID)
 	}
 }
 
