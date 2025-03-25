@@ -70,6 +70,15 @@ func (c *Client) Bets(parser DataParser) {
 	c.recv_send_id()
 	c.recv_results()
 	c.conn.Close()
+	time.Sleep(1 * time.Second)
+}
+
+func (c* Client) processResults(data string) []string {
+	if data == "\n" {
+		var arr []string
+		return arr
+	}
+	return strings.Split(strings.TrimRight(data, "\n"), "|")
 }
 
 func (c* Client) recv_results() {
@@ -80,7 +89,7 @@ func (c* Client) recv_results() {
 			err,
 		)
 	}
-	winners := strings.Split(strings.TrimRight(data, "\n"), "|")
+	winners := c.processResults(data)
 	log.Infof("action: consulta_ganadores | result: success | cant_ganadores: %v", len(winners))
 }
 
