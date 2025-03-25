@@ -74,14 +74,13 @@ func (c *Client) Bets(parser DataParser) {
 
 func (c* Client) recv_results() {
 	data, err := bufio.NewReader(c.conn).ReadString('\n')
-
 	if err != nil {
 		log.Errorf("action: receive_results | result: fail | client_id: %v | error: %v",
 			c.config.ID,
 			err,
 		)
 	}
-	winners := []string{strings.TrimRight(data, "\n")}
+	winners := strings.Split(strings.TrimRight(data, "\n"), "|")
 	log.Infof("action: consulta_ganadores | result: success | cant_ganadores: %v", len(winners))
 }
 
