@@ -67,10 +67,42 @@ func (c *Client) Bets(parser DataParser) {
 	c.createClientSocket()
 	parser.ParseData(c)
 	c.send_done()
-	c.recv_send_id()
-	c.recv_results()
+	c.conn.Close()
+	//c.recv_send_id()
+	//c.recv_results()
+	c.askResults()
 	c.conn.Close()
 	time.Sleep(1 * time.Second)
+}
+
+func (c* Client) askResults() {
+	gracefulShutdown := make(chan os.Signal, 1)
+	signal.Notify(gracefulShutdown, syscall.SIGTERM)
+	out: for {
+		select {
+		case <-gracefulShutdown:
+			c.Shutdown()
+		default:
+			c.createClientSocket()
+
+			ask_packet := "r|"
+			c.send(ask_packet)
+
+			answer, err := bufio.NewReader(c.conn).ReadString('\n')
+			if err != nil {
+				log.Errorf("action: receive_answer | result: fail | client_id: %v | error: %v",
+					c.config.ID,
+					err,
+				)
+			}
+			log.Infof("%v", answer)
+			if answer == "Done\n" {
+				break out
+			}
+
+			c.conn.Close()
+		}
+	}
 }
 
 func (c* Client) processResults(data string) []string {
