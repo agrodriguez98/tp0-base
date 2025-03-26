@@ -14,13 +14,6 @@ data = dict(
 			environment = ['PYTHONUNBUFFERED=1'],
 			networks = ['testing_net'],
 			volumes = ['./server/config.ini:/config.ini']
-		),
-		echo_tester = dict(
-			container_name = 'echo_tester',
-			depends_on = ['server'],
-			entrypoint = './validar-echo-server.sh',
-			image = 'ubuntu:latest',
-			networks = ['testing_net']
 		)
 	),
 	networks = dict(
