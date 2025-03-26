@@ -59,18 +59,24 @@ class Server:
         store_bets(bets)
         logging.info(f'action: apuesta_recibida | result: success | cantidad: {len(bets)}')
 
-    def process_winners(self, agency_id, bets):
-        winning_bets = list(filter(lambda x: x.agency == agency_id and has_won(x), bets))
-        winners = list(map(lambda x: x.document, winning_bets))
-        return '|'.join(winners) + '\n'
+    def process_winners(self):
+        winners = {id: [] for id in range(1, self.number_clients + 1)}
+        for bet in load_bets():
+            if has_won(bet):
+                (winners[bet.agency]).append(bet)
+
+        for (k, v) in winners.items():
+            winners[k] = '|'.join(list(map(lambda x: x.document, v))) + '\n'
+
+        return winners
 
     def send_results(self):
-        bets = list(load_bets())
+        winners = self.process_winners()
         for client_sock in self.pending_connections:
             client_sock.send("ID\n".encode('utf-8'))
             id_data = client_sock.recv(1024).decode('utf-8')
             id = int(id_data)
-            winners_data = self.process_winners(id, bets)
+            winners_data = winners[id]
             client_sock.send(winners_data.encode('utf-8'))
             client_sock.close()
 
