@@ -10,9 +10,7 @@ services:
     container_name: echo_tester
     depends_on:
     - server
-    entrypoint:
-    - /bin/sh
-    - ./validar-echo-server.sh
+    entrypoint: sh validar-echo-server.sh
     image: alpine:latest
     networks:
     - testing_net
