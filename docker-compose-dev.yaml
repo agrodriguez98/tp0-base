@@ -6,18 +6,6 @@ networks:
       - subnet: 172.25.125.0/24
       driver: default
 services:
-  client1:
-    container_name: client1
-    depends_on:
-    - server
-    entrypoint: /client
-    environment:
-    - CLI_ID=1
-    image: client:latest
-    networks:
-    - testing_net
-    volumes:
-    - ./client/config.yaml:/config.yaml
   echo_tester:
     container_name: echo_tester
     depends_on:
