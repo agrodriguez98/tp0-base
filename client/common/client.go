@@ -68,8 +68,6 @@ func (c *Client) Bets(parser DataParser) {
 	parser.ParseData(c)
 	c.send_done()
 	c.conn.Close()
-	//c.recv_send_id()
-	//c.recv_results()
 	c.askResults()
 	c.conn.Close()
 	time.Sleep(1 * time.Second)
@@ -85,7 +83,7 @@ func (c* Client) askResults() {
 		default:
 			c.createClientSocket()
 
-			ask_packet := "r|"
+			ask_packet := fmt.Sprintf("r|%v", c.config.ID)
 			c.send(ask_packet)
 
 			answer, err := bufio.NewReader(c.conn).ReadString('\n')
@@ -96,7 +94,9 @@ func (c* Client) askResults() {
 				)
 			}
 			log.Infof("%v", answer)
-			if answer == "Done\n" {
+			if answer != "Not yet\n" {
+				results := c.processResults(answer)
+				log.Infof("action: consulta_ganadores | result: success | cant_ganadores: %v", len(results))
 				break out
 			}
 

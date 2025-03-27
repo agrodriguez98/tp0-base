@@ -67,16 +67,13 @@ class Server:
         logging.info(
             f'action: apuesta_recibida | result: success | cantidad: {len(bets)}')
 
-    def process_winners(self):
-        winners = {id: [] for id in range(1, self.number_clients + 1)}
+    def process_winners(self, id):
+        winners = []
         for bet in load_bets():
-            if has_won(bet):
-                (winners[bet.agency]).append(bet)
+            if has_won(bet) and bet.agency == id:
+                winners.append(bet)
 
-        for (k, v) in winners.items():
-            winners[k] = '|'.join(list(map(lambda x: x.document, v))) + '\n'
-
-        return winners
+        return '|'.join(list(map(lambda x: x.document, winners))) + '\n'
 
     def send_results(self):
         winners = self.process_winners()
@@ -113,8 +110,10 @@ class Server:
                     break
                 elif header == 'r':
                     logging.info('results requested')
+                    id = int(msg[1])
                     if self.is_finished():
-                        client_sock.send("Done\n".encode('utf-8'))
+                        results = self.process_winners(id)
+                        client_sock.send(results.encode('utf-8'))
                     else:
                         client_sock.send('Not yet\n'.encode('utf-8'))
                 else:
@@ -125,7 +124,6 @@ class Server:
             logging.error(
                 "action: receive_message | result: fail | error: {e}")
         finally:
-            # add connection to waiting list
             client_sock.close()
 
     def is_finished(self):
