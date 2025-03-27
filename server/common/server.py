@@ -29,7 +29,9 @@ class Server:
             'clients_finished': 0
         })
         self.locks = {
-            'clients_finished': Lock()
+            'clients_finished': Lock(),
+            'store_bets': Lock(),
+            'load_bets': Lock(),
         }
 
     def run(self):
@@ -63,15 +65,17 @@ class Server:
         data = list(map(lambda x: x.split('|'), batch.split('||')))
         bets = list(
             map(lambda x: Bet(x[0], x[1], x[2], x[3], x[4], x[5]), data))
-        store_bets(bets)
+        with self.locks['store_bets']:
+            store_bets(bets)
         logging.info(
             f'action: apuesta_recibida | result: success | cantidad: {len(bets)}')
 
     def process_winners(self, id):
         winners = []
-        for bet in load_bets():
-            if has_won(bet) and bet.agency == id:
-                winners.append(bet)
+        with self.locks['load_bets']:
+            for bet in load_bets():
+                if has_won(bet) and bet.agency == id:
+                    winners.append(bet)
 
         return '|'.join(list(map(lambda x: x.document, winners))) + '\n'
 
@@ -117,8 +121,6 @@ class Server:
                     else:
                         client_sock.send('Not yet\n'.encode('utf-8'))
                 else:
-                    logging.info(f'received unknown header: {header}')
-                    logging.info(f'packet: {packet}')
                     break
         except OSError as e:
             logging.error(
