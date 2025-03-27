@@ -271,6 +271,14 @@ Un header con valor **d** corresponde a un mensaje el cual indica que el cliente
 
 Un header con valor **r** corresponde a un mensaje consultando por los resultados. El payload es el ID del cliente (agencia).
 
+
+#### Ejecución
+Para ejecutar todos los ejercicios (salvo el 1):
+
+``
+make docker-compose-up
+``
+
 ## Condiciones de Entrega
 Se espera que los alumnos realicen un _fork_ del presente repositorio para el desarrollo de los ejercicios y que aprovechen el esqueleto provisto tanto (o tan poco) como consideren necesario.
 
