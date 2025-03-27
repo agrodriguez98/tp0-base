@@ -47,18 +47,22 @@ func NewClient(config ClientConfig) *Client {
 }
 
 // CreateClientSocket Initializes client socket. In case of
-// failure, error is printed in stdout/stderr and exit 1
-// is returned
+// failure, error is printed in stdout/stderr and tries to
+// reconnect
 func (c *Client) createClientSocket() error {
-	conn, err := net.Dial("tcp", c.config.ServerAddress)
-	if err != nil {
+	for i := 1; i <= 100; i++ {
+		conn, err := net.Dial("tcp", c.config.ServerAddress)
+		if err == nil {
+			c.conn = conn
+			break
+		}
 		log.Criticalf(
-			"action: connect | result: fail | client_id: %v | error: %v",
+			"action: connect | result: fail | client_id: %v | error: %v | attempt: %v",
 			c.config.ID,
 			err,
+			i,
 		)
 	}
-	c.conn = conn
 	return nil
 }
 
