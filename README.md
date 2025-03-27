@@ -19,7 +19,7 @@ Los targets disponibles son:
 
 ### Servidor
 
-Se trata de un "echo server", en donde los mensajes recibidos por el cliente se responden inmediatamente y sin alterar. 
+Se trata de un "echo server", en donde los mensajes recibidos por el cliente se responden inmediatamente y sin alterar.
 
 Se ejecutan en bucle las siguientes etapas:
 
@@ -31,7 +31,7 @@ Se ejecutan en bucle las siguientes etapas:
 
 ### Cliente
  se conecta reiteradas veces al servidor y envía mensajes de la siguiente forma:
- 
+
 1. Cliente se conecta al servidor.
 2. Cliente genera mensaje incremental.
 3. Cliente envía mensaje al servidor y espera mensaje de respuesta.
@@ -76,7 +76,7 @@ client1 exited with code 0
 En esta primera parte del trabajo práctico se plantean una serie de ejercicios que sirven para introducir las herramientas básicas de Docker que se utilizarán a lo largo de la materia. El entendimiento de las mismas será crucial para el desarrollo de los próximos TPs.
 
 ### Ejercicio N°1:
-Definir un script de bash `generar-compose.sh` que permita crear una definición de Docker Compose con una cantidad configurable de clientes.  El nombre de los containers deberá seguir el formato propuesto: client1, client2, client3, etc. 
+Definir un script de bash `generar-compose.sh` que permita crear una definición de Docker Compose con una cantidad configurable de clientes.  El nombre de los containers deberá seguir el formato propuesto: client1, client2, client3, etc.
 
 El script deberá ubicarse en la raíz del proyecto y recibirá por parámetro el nombre del archivo de salida y la cantidad de clientes esperados:
 
@@ -133,9 +133,22 @@ Se deberá implementar un módulo de comunicación entre el cliente y el servido
 * Correcta separación de responsabilidades entre modelo de dominio y capa de comunicación.
 * Correcto empleo de sockets, incluyendo manejo de errores y evitando los fenómenos conocidos como [_short read y short write_](https://cs61.seas.harvard.edu/site/2018/FileDescriptors/).
 
+#### Protocolo
+El cliente primero envía un entero de 32 bits que indica la cantidad de bytes que enviará a continuación. Luego envía los datos de la apuesta. Cuando el servidor recibe toda la información envía un ACK para confirmar la recepción de los datos.
+
+![Protocol](/protocol.png)
+
+Los datos enviados poseen la siguiente estructura:
+
+``
+agency|firstName|lastName|document|birthdate|number
+``
+
+El documento y el número de apuesta son enteros. La fecha de nacimiento es un string con formato yyyy-mm-dd. El nombre, apellido y ID de agencia son strings. Todos los datos están separados por un delimitador.
+
 
 ### Ejercicio N°6:
-Modificar los clientes para que envíen varias apuestas a la vez (modalidad conocida como procesamiento por _chunks_ o _batchs_). 
+Modificar los clientes para que envíen varias apuestas a la vez (modalidad conocida como procesamiento por _chunks_ o _batchs_).
 Los _batchs_ permiten que el cliente registre varias apuestas en una misma consulta, acortando tiempos de transmisión y procesamiento.
 
 La información de cada agencia será simulada por la ingesta de su archivo numerado correspondiente, provisto por la cátedra dentro de `.data/datasets.zip`.
@@ -143,9 +156,36 @@ Los archivos deberán ser inyectados en los containers correspondientes y persis
 
 En el servidor, si todas las apuestas del *batch* fueron procesadas correctamente, imprimir por log: `action: apuesta_recibida | result: success | cantidad: ${CANTIDAD_DE_APUESTAS}`. En caso de detectar un error con alguna de las apuestas, debe responder con un código de error a elección e imprimir: `action: apuesta_recibida | result: fail | cantidad: ${CANTIDAD_DE_APUESTAS}`.
 
-La cantidad máxima de apuestas dentro de cada _batch_ debe ser configurable desde config.yaml. Respetar la clave `batch: maxAmount`, pero modificar el valor por defecto de modo tal que los paquetes no excedan los 8kB. 
+La cantidad máxima de apuestas dentro de cada _batch_ debe ser configurable desde config.yaml. Respetar la clave `batch: maxAmount`, pero modificar el valor por defecto de modo tal que los paquetes no excedan los 8kB.
 
 Por su parte, el servidor deberá responder con éxito solamente si todas las apuestas del _batch_ fueron procesadas correctamente.
+
+#### Protocolo
+Luego de establecer la conexión, el cliente envía un número entero que indica la cantidad de bytes que enviará a continuación. Al recibir este número el servidor responde con un mensaje confirmando la recepción del primero. Ahora el cliente envía un batch de apuestas cuyo tamaño en bytes fue informado previamente. Al recibirlo, el servidor nuevamente responde con un ACK. El proceso se repite hasta que el cliente haya enviado todos los batchs. En ese momento el cliente envía un mensaje informando que terminó de enviar todas las apuestas. El servidor responde con un ACK y ambos lados cierran la conexión.
+
+![Protocol6](/protocol6.png)
+
+Los datos enviados poseen la siguiente estructura:
+
+``
+bet1||bet2||bet3||...||betn
+``
+
+Donde cada bet tiene la siguiente forma:
+
+``
+agency|firstName|lastName|document|birthdate|number
+``
+
+A su vez, algunos mensajes poseen un header:
+
+``
+header|payload
+``
+
+Un header con valor **s** indica que el mensaje recibido es el tamaño en bytes del siguiente mensaje, el cual será un batch de apuestas.
+
+Un header con valor **d** corresponde a un mensaje el cual indica que el cliente terminó de enviar todos los batchs. Este mensaje no tiene payload.
 
 ### Ejercicio N°7:
 
@@ -160,12 +200,76 @@ Las funciones `load_bets(...)` y `has_won(...)` son provistas por la cátedra y 
 
 No es correcto realizar un broadcast de todos los ganadores hacia todas las agencias, se espera que se informen los DNIs ganadores que correspondan a cada una de ellas.
 
+#### Protocolo
+Luego de establecer la conexión, el cliente envía un número entero que indica la cantidad de bytes que enviará a continuación. Al recibir este número el servidor responde con un mensaje confirmando la recepción del primero. Ahora el cliente envía un batch de apuestas cuyo tamaño en bytes fue informado previamente. Al recibirlo, el servidor nuevamente responde con un ACK. El proceso se repite hasta que el cliente haya enviado todos los batchs. En ese momento el cliente envía un mensaje informando que terminó de enviar todas las apuestas.
+
+![Protocol7](/protocol7.png)
+
+En este punto el servidor guarda la conexión con el cliente.
+Una vez que todos los clientes terminaron de enviar sus batchs de apuestas, el servidor les consulta a los mismos, uno por uno, su ID de agencia. Cuando el cliente le responde con el valor, el servidor le envía el listado de ganadores correspondientes a dicha agencia. Cuando terminó de repartir todos los resultados se cierran las conexiones.
+
+Los batches de apuestas (data) poseen la siguiente estructura:
+
+``
+bet1||bet2||bet3||...||betn
+``
+
+Donde cada bet tiene la siguiente forma:
+
+``
+agency|firstName|lastName|document|birthdate|number
+``
+
+A su vez, algunos mensajes poseen un header:
+
+``
+header|payload
+``
+
+Un header con valor **s** indica que el mensaje recibido es el tamaño en bytes del siguiente mensaje, el cual será un batch de apuestas.
+
+Un header con valor **d** corresponde a un mensaje el cual indica que el cliente terminó de enviar todos los batchs. Este mensaje no tiene payload.
+
 ## Parte 3: Repaso de Concurrencia
 En este ejercicio es importante considerar los mecanismos de sincronización a utilizar para el correcto funcionamiento de la persistencia.
 
 ### Ejercicio N°8:
 
 Modificar el servidor para que permita aceptar conexiones y procesar mensajes en paralelo. En caso de que el alumno implemente el servidor en Python utilizando _multithreading_,  deberán tenerse en cuenta las [limitaciones propias del lenguaje](https://wiki.python.org/moin/GlobalInterpreterLock).
+
+#### Implementación
+Para lograr que el servidor acepte conexiones y procese mensajes en paralelo, se optó por una implementación concurrente a nivel procesos. Cada vez que un cliente se conecta al servidor, un nuevo proceso es creado, el cual se encarga de procesar todos los batchs de apuestas que le envía el cliente. Se utilizan Locks para sincronizar tanto el almacenamiento como la lectura de registros de apuestas. Para determinar cuando todos los clientes enviaron sus batchs de apuestas, se utiliza un contador inicializado en 0, el cuál se incrementa en uno de forma atómica cada vez que un cliente terminó de enviar toda su información. Una vez que el contador es igual al número de clientes, se les envía los resultados a los mismos.
+
+#### Protocolo
+Luego de establecer la conexión, el cliente envía un número entero que indica la cantidad de bytes que enviará a continuación. Al recibir este número el servidor responde con un mensaje confirmando la recepción del primero. Ahora el cliente envía un batch de apuestas cuyo tamaño en bytes fue informado previamente. Al recibirlo, el servidor nuevamente responde con un ACK. El proceso se repite hasta que el cliente haya enviado todos los batchs. En ese momento el cliente envía un mensaje informando que terminó de enviar todas las apuestas y se cierra la conexión.
+
+![Protocol8](/protocol8.png)
+
+En este punto el cliente se vuelve a conectar al servidor y le envía un mensaje consultando por los resultados correspondientes a su agencia. En caso que no todos los clientes hayan finalizado con el envío de batchs, se le responde de forma negativa y se cierra la conexión. El cliente repite el proceso hasta que finalmente el servidor le envía los ganadores correspondientes.
+
+Los batches de apuestas (data) poseen la siguiente estructura:
+
+``
+bet1||bet2||bet3||...||betn
+``
+
+Donde cada bet tiene la siguiente forma:
+
+``
+agency|firstName|lastName|document|birthdate|number
+``
+
+A su vez, algunos mensajes poseen un header:
+
+``
+header|payload
+``
+
+Un header con valor **s** indica que el mensaje recibido es el tamaño en bytes del siguiente mensaje, el cual será un batch de apuestas.
+
+Un header con valor **d** corresponde a un mensaje el cual indica que el cliente terminó de enviar todos los batchs. Este mensaje no tiene payload.
+
+Un header con valor **r** corresponde a un mensaje consultando por los resultados. El payload es el ID del cliente (agencia).
 
 ## Condiciones de Entrega
 Se espera que los alumnos realicen un _fork_ del presente repositorio para el desarrollo de los ejercicios y que aprovechen el esqueleto provisto tanto (o tan poco) como consideren necesario.
