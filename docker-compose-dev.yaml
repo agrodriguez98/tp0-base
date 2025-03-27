@@ -10,10 +10,14 @@ services:
     container_name: echo_tester
     depends_on:
     - server
-    entrypoint: ./validar-echo-server.sh
-    image: ubuntu:latest
+    entrypoint:
+    - /bin/sh
+    - ./validar-echo-server.sh
+    image: alpine:latest
     networks:
     - testing_net
+    volumes:
+    - ./validar-echo-server.sh:/validar-echo-server.sh
   server:
     container_name: server
     entrypoint: python3 /main.py

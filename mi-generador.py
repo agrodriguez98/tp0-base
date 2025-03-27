@@ -18,9 +18,10 @@ data = dict(
 		echo_tester = dict(
 			container_name = 'echo_tester',
 			depends_on = ['server'],
-			entrypoint = './validar-echo-server.sh',
-			image = 'ubuntu:latest',
-			networks = ['testing_net']
+			entrypoint = ["/bin/sh", "./validar-echo-server.sh"],
+			image = 'alpine:latest',
+			networks = ['testing_net'],
+			volumes = ['./validar-echo-server.sh:/validar-echo-server.sh']
 		)
 	),
 	networks = dict(
